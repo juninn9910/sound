@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>쩡이 전용 사운드보드</title>
+<style>
+  body { 
+    display: flex; 
+    flex-direction: column;
+    justify-content: center; 
+    align-items: center; 
+    height: 100vh; 
+    background-color: #1a1a2e; 
+    margin: 0; 
+    color: white; 
+    font-family: sans-serif; 
+  }
+  h1 { margin-bottom: 30px; font-size: 24px; color: #e94560; }
+  .grid { 
+    display: grid; 
+    grid-template-columns: repeat(3, 1fr); 
+    gap: 20px; 
+  }
+  .pad { 
+    width: 120px; 
+    height: 120px; 
+    background-color: #16213e; 
+    border: 2px solid #0f3460;
+    border-radius: 20px; 
+    display: flex; 
+    justify-content: center; 
+    align-items: center; 
+    font-size: 15px; 
+    font-weight: bold;
+    cursor: pointer; 
+    user-select: none; 
+    text-align: center; 
+    padding: 10px; 
+    word-break: keep-all; 
+    box-shadow: 0 8px 15px rgba(0,0,0,0.4); 
+    transition: all 0.2s ease; 
+  }
+  .pad:active { transform: scale(0.95); box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
+  .pad.recording { background-color: #e94560; border-color: #e94560; animation: pulse 1s infinite; }
+  .pad.recorded { background-color: #0f3460; border-color: #43bccd; color: #43bccd; }
+  .pad.playing { background-color: #43bccd; color: #1a1a2e; border-color: #43bccd; }
+  @keyframes pulse { 
+    0% { transform: scale(1); } 
+    50% { transform: scale(1.05); } 
+    100% { transform: scale(1); } 
+  }
+</style>
+</head>
+<body>
+
+<h1>🎙️ 아빠 전용 호출기</h1>
+<div class="grid" id="board"></div>
+
+<script>
+  const board = document.getElementById('board');
+  
+  // 6개의 패드 생성
+  for (let i = 0; i < 6; i++) {
+    const pad = document.createElement('div');
+    pad.className = 'pad';
+    pad.innerText = '터치해서\n녹음시작';
+    pad.dataset.state = 'empty'; // empty, recording, recorded
+    
+    let mediaRecorder;
+    let audioChunks = [];
+    let audioBlob = null;
+    let audioUrl = null;
+    let audio = null;
+    let stream = null;
+    
+    let pressTimer;
+    let isLongPress = false;
+
+    // PC 마우스 이벤트
+    pad.addEventListener('mousedown', (e) => startInteraction(e, pad));
+    pad.addEventListener('mouseup', (e) => endInteraction(e, pad));
+    pad.addEventListener('mouseleave', (e) => { clearTimeout(pressTimer); });
+    
+    // 모바일 터치 이벤트
+    pad.addEventListener('touchstart', (e) => { e.preventDefault(); startInteraction(e, pad); });
+    pad.addEventListener('touchend', (e) => { e.preventDefault(); endInteraction(e, pad); });
+
+    async function startInteraction(e, p) {
+      isLongPress = false;
+      if (p.dataset.state === 'recorded') {
+        pressTimer = setTimeout(async () => {
+          isLongPress = true;
+          await startRecording(p);
+        }, 800); // 0.8초 꾹 누르면 재녹음
+      }
+    }
+
+    async function endInteraction(e, p) {
+      clearTimeout(pressTimer);
+      
+      if (isLongPress) return; // 꾹 누르기로 이미 녹음이 시작됐다면 무시
+
+      if (p.dataset.state === 'empty') {
+        await startRecording(p);
+      } else if (p.dataset.state === 'recording') {
+        stopRecording(p);
+      } else if (p.dataset.state === 'recorded') {
+        playAudio(p);
+      }
+    }
+
+    async function startRecording(p) {
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        mediaRecorder = new MediaRecorder(stream);
+        audioChunks = [];
+
+        mediaRecorder.ondataavailable = event => {
+          audioChunks.push(event.data);
+        };
+
+        mediaRecorder.onstop = () => {
+          audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+          audioUrl = URL.createObjectURL(audioBlob);
+          audio = new Audio(audioUrl);
+          
+          audio.onended = () => {
+            p.classList.remove('playing');
+            p.innerText = '재생\n(꾹 누르면 재녹음)';
+          };
+
+          p.dataset.state = 'recorded';
+          p.classList.remove('recording');
+          p.classList.add('recorded');
+          p.innerText = '재생\n(꾹 누르면 재녹음)';
+          
+          stream.getTracks().forEach(track => track.stop());
+        };
+
+        mediaRecorder.start();
+        p.dataset.state = 'recording';
+        p.classList.remove('recorded', 'playing');
+        p.classList.add('recording');
+        p.innerText = '녹음 중...\n(터치해서 정지)';
+      } catch (err) {
+        alert('야 쩡아! 마이크 권한이 없어! 브라우저 설정 확인해!');
+      }
+    }
+
+    function stopRecording(p) {
+      if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+        mediaRecorder.stop();
+      }
+    }
+
+    function playAudio(p) {
+      if (audio) {
+        audio.currentTime = 0;
+        audio.play();
+        p.classList.add('playing');
+        p.innerText = '재생 중...';
+      }
+    }
+
+    board.appendChild(pad);
+  }
+</script>
+</body>
+</html>
