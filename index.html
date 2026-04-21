@@ -3,165 +3,280 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>쩡이 전용 사운드보드</title>
+<title>쩡난감 - Classic Edition</title>
 <style>
-  body { 
-    display: flex; 
-    flex-direction: column;
-    justify-content: center; 
-    align-items: center; 
-    height: 100vh; 
-    background-color: #1a1a2e; 
-    margin: 0; 
-    color: white; 
-    font-family: sans-serif; 
+  :root {
+    --mac-bg: #c0c0c0;
+    --mac-border-light: #ffffff;
+    --mac-border-dark: #808080;
+    --mac-border-darker: #404040;
+    --aqua-blue: #3875d7;
+    --aqua-red: #ff3b30;
   }
-  h1 { margin-bottom: 30px; font-size: 24px; color: #e94560; }
-  .grid { 
-    display: grid; 
-    grid-template-columns: repeat(3, 1fr); 
-    gap: 20px; 
+
+  body {
+    background-color: #556677;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    margin: 0;
+    font-family: "Charcoal", "Geneva", "Apple SD Gothic Neo", sans-serif;
   }
-  .pad { 
-    width: 120px; 
-    height: 120px; 
-    background-color: #16213e; 
-    border: 2px solid #0f3460;
-    border-radius: 20px; 
-    display: flex; 
-    justify-content: center; 
-    align-items: center; 
-    font-size: 15px; 
+
+  /* 창 디자인 */
+  .window {
+    width: 380px;
+    background-color: var(--mac-bg);
+    border: 2px solid var(--mac-border-light);
+    box-shadow: 2px 2px 0px var(--mac-border-dark), 4px 4px 0px var(--mac-border-darker);
+    padding: 2px;
+  }
+
+  /* 상단 타이틀 바 */
+  .title-bar {
+    background: linear-gradient(to bottom, #eeeeee, #aaaaaa);
+    height: 24px;
+    display: flex;
+    align-items: center;
+    padding: 0 8px;
+    border-bottom: 1px solid var(--mac-border-dark);
+  }
+
+  .close-box {
+    width: 13px;
+    height: 13px;
+    border: 1px solid #444;
+    background: radial-gradient(circle at 30% 30%, #fff, #ddd);
+    box-shadow: 1px 1px 1px rgba(0,0,0,0.2);
+  }
+
+  .title-bar-text {
+    flex-grow: 1;
+    text-align: center;
     font-weight: bold;
-    cursor: pointer; 
-    user-select: none; 
-    text-align: center; 
-    padding: 10px; 
-    word-break: keep-all; 
-    box-shadow: 0 8px 15px rgba(0,0,0,0.4); 
-    transition: all 0.2s ease; 
+    font-size: 13px;
+    color: #333;
+    text-shadow: 1px 1px 0px white;
   }
-  .pad:active { transform: scale(0.95); box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
-  .pad.recording { background-color: #e94560; border-color: #e94560; animation: pulse 1s infinite; }
-  .pad.recorded { background-color: #0f3460; border-color: #43bccd; color: #43bccd; }
-  .pad.playing { background-color: #43bccd; color: #1a1a2e; border-color: #43bccd; }
-  @keyframes pulse { 
-    0% { transform: scale(1); } 
-    50% { transform: scale(1.05); } 
-    100% { transform: scale(1); } 
+
+  /* 메뉴 바 */
+  .menu-bar {
+    display: flex;
+    padding: 3px 12px;
+    font-size: 11px;
+    border-bottom: 1px solid var(--mac-border-dark);
+    gap: 15px;
+    background: white;
+  }
+
+  .content {
+    padding: 20px;
+    background-color: #ebebeb;
+    border-top: 1px solid white;
+  }
+
+  /* 버튼 그리드 */
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 15px;
+    margin-bottom: 25px;
+  }
+
+  /* 입체적인 Aqua 버튼 */
+  .pad {
+    aspect-ratio: 1;
+    background: radial-gradient(circle at 30% 30%, #fefefe, #b0b0b0);
+    border: 1px solid var(--mac-border-darker);
+    border-radius: 12px;
+    box-shadow: inset 1px 1px 2px white, 2px 2px 5px rgba(0,0,0,0.3);
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    font-size: 11px;
+    font-weight: bold;
+    color: #444;
+    text-align: center;
+    user-select: none;
+    transition: all 0.1s;
+  }
+
+  .pad:active {
+    transform: translateY(2px);
+    box-shadow: inset 2px 2px 6px rgba(0,0,0,0.4);
+  }
+
+  .pad.recording {
+    background: radial-gradient(circle at 30% 30%, #ff7b70, var(--aqua-red));
+    color: white;
+    box-shadow: 0 0 15px var(--aqua-red);
+    border-color: #900;
+  }
+
+  .pad.recorded {
+    background: radial-gradient(circle at 30% 30%, #7db9e8, var(--aqua-blue));
+    color: white;
+    border-color: #1a4a91;
+  }
+
+  /* 하단 UI 슬라이더 및 타이머 */
+  .footer-ui {
+    border: 1px solid var(--mac-border-dark);
+    background: #d4d4d4;
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    border-radius: 4px;
+  }
+
+  .time-code {
+    background: #000;
+    color: #00ff00;
+    font-family: 'Courier New', monospace;
+    padding: 8px;
+    text-align: center;
+    font-size: 20px;
+    border: 2px inset var(--mac-border-dark);
+  }
+
+  .slider-container {
+    height: 10px;
+    background: #888;
+    border: 1px solid #444;
+    position: relative;
+    margin: 5px 0;
+  }
+
+  .slider-thumb {
+    width: 14px;
+    height: 18px;
+    background: #eee;
+    border: 1px solid #222;
+    position: absolute;
+    top: -5px;
+    left: 20%;
+    box-shadow: 1px 1px 2px rgba(0,0,0,0.5);
   }
 </style>
 </head>
 <body>
 
-<h1>🎙️ 아빠 전용 호출기</h1>
-<div class="grid" id="board"></div>
+<div class="window">
+  <div class="title-bar">
+    <div class="close-box"></div>
+    <div class="title-bar-text">쩡난감 v1.0</div>
+  </div>
+  <div class="menu-bar">
+    <span>File</span><span>Edit</span><span>Sound</span><span>Help</span>
+  </div>
+  <div class="content">
+    <div class="grid" id="board"></div>
+    <div class="footer-ui">
+      <div class="time-code" id="timer">00:00:00</div>
+      <div class="slider-container">
+        <div class="slider-thumb"></div>
+      </div>
+    </div>
+  </div>
+</div>
 
 <script>
   const board = document.getElementById('board');
-  
-  // 6개의 패드 생성
+  const timerDisplay = document.getElementById('timer');
+  let globalTimer;
+  let seconds = 0;
+
+  function updateTimer() {
+    seconds++;
+    const hrs = String(Math.floor(seconds / 3600)).padStart(2, '0');
+    const mins = String(Math.floor((seconds % 3600) / 60)).padStart(2, '0');
+    const secs = String(seconds % 60).padStart(2, '0');
+    timerDisplay.innerText = `${hrs}:${mins}:${secs}`;
+  }
+
   for (let i = 0; i < 6; i++) {
     const pad = document.createElement('div');
     pad.className = 'pad';
-    pad.innerText = '터치해서\n녹음시작';
-    pad.dataset.state = 'empty'; // empty, recording, recorded
+    pad.innerText = 'EMPTY';
+    pad.dataset.state = 'empty';
     
     let mediaRecorder;
     let audioChunks = [];
-    let audioBlob = null;
-    let audioUrl = null;
     let audio = null;
-    let stream = null;
-    
     let pressTimer;
     let isLongPress = false;
 
-    // PC 마우스 이벤트
-    pad.addEventListener('mousedown', (e) => startInteraction(e, pad));
-    pad.addEventListener('mouseup', (e) => endInteraction(e, pad));
-    pad.addEventListener('mouseleave', (e) => { clearTimeout(pressTimer); });
-    
-    // 모바일 터치 이벤트
-    pad.addEventListener('touchstart', (e) => { e.preventDefault(); startInteraction(e, pad); });
-    pad.addEventListener('touchend', (e) => { e.preventDefault(); endInteraction(e, pad); });
-
-    async function startInteraction(e, p) {
-      isLongPress = false;
-      if (p.dataset.state === 'recorded') {
-        pressTimer = setTimeout(async () => {
-          isLongPress = true;
-          await startRecording(p);
-        }, 800); // 0.8초 꾹 누르면 재녹음
-      }
-    }
-
-    async function endInteraction(e, p) {
-      clearTimeout(pressTimer);
-      
-      if (isLongPress) return; // 꾹 누르기로 이미 녹음이 시작됐다면 무시
-
-      if (p.dataset.state === 'empty') {
-        await startRecording(p);
-      } else if (p.dataset.state === 'recording') {
-        stopRecording(p);
-      } else if (p.dataset.state === 'recorded') {
-        playAudio(p);
-      }
-    }
-
-    async function startRecording(p) {
+    const startRecording = async () => {
       try {
-        stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
         mediaRecorder = new MediaRecorder(stream);
         audioChunks = [];
-
-        mediaRecorder.ondataavailable = event => {
-          audioChunks.push(event.data);
-        };
-
+        mediaRecorder.ondataavailable = e => audioChunks.push(e.data);
         mediaRecorder.onstop = () => {
-          audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
-          audioUrl = URL.createObjectURL(audioBlob);
-          audio = new Audio(audioUrl);
-          
-          audio.onended = () => {
-            p.classList.remove('playing');
-            p.innerText = '재생\n(꾹 누르면 재녹음)';
-          };
-
-          p.dataset.state = 'recorded';
-          p.classList.remove('recording');
-          p.classList.add('recorded');
-          p.innerText = '재생\n(꾹 누르면 재녹음)';
-          
-          stream.getTracks().forEach(track => track.stop());
+          const blob = new Blob(audioChunks, { type: 'audio/webm' });
+          audio = new Audio(URL.createObjectURL(blob));
+          pad.dataset.state = 'recorded';
+          pad.classList.remove('recording');
+          pad.classList.add('recorded');
+          pad.innerText = 'READY';
+          clearInterval(globalTimer);
+          seconds = 0;
+          timerDisplay.innerText = "00:00:00";
+          stream.getTracks().forEach(t => t.stop());
         };
-
         mediaRecorder.start();
-        p.dataset.state = 'recording';
-        p.classList.remove('recorded', 'playing');
-        p.classList.add('recording');
-        p.innerText = '녹음 중...\n(터치해서 정지)';
-      } catch (err) {
-        alert('야 쩡아! 마이크 권한이 없어! 브라우저 설정 확인해!');
-      }
-    }
+        pad.dataset.state = 'recording';
+        pad.classList.add('recording');
+        pad.innerText = 'REC...';
+        globalTimer = setInterval(updateTimer, 1000);
+      } catch (err) { alert('마이크 켜라 쩡아! 보안 설정 확인해.'); }
+    };
 
-    function stopRecording(p) {
-      if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+    const handleInteraction = (e) => {
+      e.preventDefault();
+      if (pad.dataset.state === 'empty') {
+        startRecording();
+      } else if (pad.dataset.state === 'recording') {
         mediaRecorder.stop();
+      } else if (pad.dataset.state === 'recorded') {
+        if (audio) { audio.currentTime = 0; audio.play(); }
       }
-    }
+    };
 
-    function playAudio(p) {
-      if (audio) {
-        audio.currentTime = 0;
-        audio.play();
-        p.classList.add('playing');
-        p.innerText = '재생 중...';
+    // 마우스 이벤트
+    pad.addEventListener('mousedown', (e) => {
+      isLongPress = false;
+      if (pad.dataset.state === 'recorded') {
+        pressTimer = setTimeout(() => {
+          isLongPress = true;
+          startRecording();
+        }, 800);
       }
-    }
+    });
+    pad.addEventListener('mouseup', (e) => {
+      clearTimeout(pressTimer);
+      if (!isLongPress) handleInteraction(e);
+    });
+
+    // 터치 이벤트
+    pad.addEventListener('touchstart', (e) => {
+      e.preventDefault();
+      isLongPress = false;
+      if (pad.dataset.state === 'recorded') {
+        pressTimer = setTimeout(() => {
+          isLongPress = true;
+          startRecording();
+        }, 800);
+      }
+    });
+    pad.addEventListener('touchend', (e) => {
+      clearTimeout(pressTimer);
+      if (!isLongPress) handleInteraction(e);
+    });
 
     board.appendChild(pad);
   }
