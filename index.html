@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>쩡난감 - Classic Edition (iOS Patch)</title>
+<title>쩡난감 - Voice Modulator Edition</title>
 <style>
   :root {
     --mac-bg: #c0c0c0;
@@ -22,7 +22,7 @@
     height: 100vh;
     margin: 0;
     font-family: "Charcoal", "Geneva", "Apple SD Gothic Neo", sans-serif;
-    user-select: none; /* 아이폰에서 텍스트 선택되는 거 방지 */
+    user-select: none;
     -webkit-user-select: none;
   }
 
@@ -98,7 +98,7 @@
     color: #444;
     text-align: center;
     transition: all 0.1s;
-    touch-action: manipulation; /* 아이폰 더블탭 확대 방지 */
+    touch-action: manipulation;
   }
 
   .pad:active {
@@ -139,23 +139,33 @@
     border: 2px inset var(--mac-border-dark);
   }
 
-  .slider-container {
-    height: 10px;
-    background: #888;
-    border: 1px solid #444;
-    position: relative;
-    margin: 5px 0;
+  .slider-label {
+    text-align: center;
+    font-size: 11px;
+    font-weight: bold;
+    color: #333;
+    margin-bottom: -5px;
   }
 
-  .slider-thumb {
+  /* 진짜 작동하는 조절기 스타일 */
+  input[type=range].mac-slider {
+    -webkit-appearance: none;
+    width: 100%;
+    background: #888;
+    height: 10px;
+    border: 1px solid #444;
+    outline: none;
+    box-shadow: inset 1px 1px 2px rgba(0,0,0,0.5);
+  }
+
+  input[type=range].mac-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
     width: 14px;
-    height: 18px;
+    height: 20px;
     background: #eee;
     border: 1px solid #222;
-    position: absolute;
-    top: -5px;
-    left: 20%;
     box-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+    cursor: pointer;
   }
 </style>
 </head>
@@ -164,7 +174,7 @@
 <div class="window">
   <div class="title-bar">
     <div class="close-box"></div>
-    <div class="title-bar-text">쩡난감 v1.1 (iOS Patch)</div>
+    <div class="title-bar-text">쩡난감 v2.0 (Voice Modulator)</div>
   </div>
   <div class="menu-bar">
     <span>File</span><span>Edit</span><span>Sound</span><span>Help</span>
@@ -173,9 +183,8 @@
     <div class="grid" id="board"></div>
     <div class="footer-ui">
       <div class="time-code" id="timer">00:00:00</div>
-      <div class="slider-container">
-        <div class="slider-thumb"></div>
-      </div>
+      <div class="slider-label">괴물 목소리 ◀ [ 피치 조절 ] ▶ 헬륨 다람쥐</div>
+      <input type="range" id="pitch-slider" class="mac-slider" min="0.5" max="2.0" step="0.1" value="1.0">
     </div>
   </div>
 </div>
@@ -183,6 +192,7 @@
 <script>
   const board = document.getElementById('board');
   const timerDisplay = document.getElementById('timer');
+  const pitchSlider = document.getElementById('pitch-slider');
   let globalTimer;
   let seconds = 0;
 
@@ -210,7 +220,6 @@
       try {
         const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
         
-        // 아이폰 사파리를 위한 포맷 자동 감지
         mediaRecorder = new MediaRecorder(stream);
         audioChunks = [];
         
@@ -219,7 +228,6 @@
         };
         
         mediaRecorder.onstop = () => {
-          // 브라우저가 뱉어낸 마임타입 그대로 사용
           const blob = new Blob(audioChunks, { type: mediaRecorder.mimeType || 'audio/mp4' });
           audio = new Audio(URL.createObjectURL(blob));
           pad.dataset.state = 'recorded';
@@ -238,7 +246,7 @@
         pad.innerText = 'REC...';
         globalTimer = setInterval(updateTimer, 1000);
       } catch (err) { 
-        alert(`야 쩡아! 오류 났다: ${err.message}. 아이폰 설정 -> 사파리 가서 마이크 권한 켜져 있는지 확인해!`); 
+        alert(`야 쩡아! 오류 났다: ${err.message}. 아이폰 설정 확인해!`); 
       }
     };
 
@@ -252,14 +260,22 @@
       } else if (pad.dataset.state === 'recorded') {
         if (audio) { 
           audio.currentTime = 0; 
+          
+          // 핵심: 슬라이더 값에 따라 재생 속도/피치 조절
+          audio.playbackRate = pitchSlider.value;
+          
+          // 아이폰 사파리에서 목소리가 웃기게 변조되려면 피치 보정 기능을 꺼야 함
+          audio.preservesPitch = false;
+          if (audio.webkitPreservesPitch !== undefined) audio.webkitPreservesPitch = false;
+          if (audio.mozPreservesPitch !== undefined) audio.mozPreservesPitch = false;
+
           audio.play(); 
         }
       }
     };
 
-    // 아이폰 터치 충돌 방지를 위해 이벤트 리스너 정리
     pad.addEventListener('touchstart', (e) => {
-      e.preventDefault(); // 화면 스크롤, 줌 방지
+      if (e.target !== pitchSlider) e.preventDefault(); 
       isLongPress = false;
       if (pad.dataset.state === 'recorded') {
         pressTimer = setTimeout(() => {
@@ -270,12 +286,11 @@
     }, { passive: false });
 
     pad.addEventListener('touchend', (e) => {
-      e.preventDefault();
+      if (e.target !== pitchSlider) e.preventDefault();
       clearTimeout(pressTimer);
-      if (!isLongPress) handleInteraction(e);
+      if (!isLongPress && e.target !== pitchSlider) handleInteraction(e);
     });
     
-    // PC 호환성 유지
     pad.addEventListener('mousedown', (e) => {
       isLongPress = false;
       if (pad.dataset.state === 'recorded') {
