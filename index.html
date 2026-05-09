@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>쩡난감 - Hotfix Edition</title>
+<title>쩡난감 v3.2 (Design Overhaul)</title>
 <style>
   :root {
     --mac-bg: #c0c0c0;
@@ -79,7 +79,7 @@
     display: grid;
     grid-template-columns: repeat(3, 1fr);
     gap: 15px;
-    margin-bottom: 25px;
+    margin-bottom: 20px;
   }
 
   .pad {
@@ -119,51 +119,65 @@
     border-color: #1a4a91;
   }
 
+  /* 하단 UI 디자인 대대적 수정 (Aqua 스타일) */
   .footer-ui {
-    border: 1px solid var(--mac-border-dark);
-    background: #d4d4d4;
-    padding: 10px;
+    background: linear-gradient(to bottom, #e8e8e8, #d0d0d0);
+    padding: 15px;
     display: flex;
     flex-direction: column;
-    gap: 10px;
-    border-radius: 4px;
+    gap: 15px;
+    border-radius: 10px;
+    border: 1px solid #aaa;
+    box-shadow: inset 1px 1px 3px rgba(255,255,255,0.8), 2px 2px 4px rgba(0,0,0,0.1);
   }
 
   .time-code {
-    background: #000;
-    color: #00ff00;
+    background: #111;
+    color: #33ff33;
     font-family: 'Courier New', monospace;
     padding: 8px;
     text-align: center;
-    font-size: 20px;
-    border: 2px inset var(--mac-border-dark);
+    font-size: 24px;
+    border-radius: 6px;
+    border: 2px solid #555;
+    box-shadow: inset 2px 2px 6px rgba(0,0,0,0.8), 0 1px 0 rgba(255,255,255,0.6);
+    text-shadow: 0 0 5px rgba(51, 255, 51, 0.5);
   }
 
   .slider-label {
     text-align: center;
     font-size: 11px;
     font-weight: bold;
-    color: #333;
+    color: #555;
+    text-shadow: 1px 1px 0px rgba(255,255,255,0.8);
     margin-bottom: -5px;
   }
 
+  /* 젤리(Aqua) 느낌의 슬라이더 궤도 */
   input[type=range].mac-slider {
     -webkit-appearance: none;
     width: 100%;
-    background: #888;
-    height: 10px;
-    border: 1px solid #444;
-    outline: none;
-    box-shadow: inset 1px 1px 2px rgba(0,0,0,0.5);
+    background: transparent;
+  }
+  
+  input[type=range].mac-slider::-webkit-slider-runnable-track {
+    height: 8px;
+    background: #999;
+    border-radius: 4px;
+    box-shadow: inset 1px 1px 3px rgba(0,0,0,0.6), 0 1px 0 rgba(255,255,255,0.9);
+    border: 1px solid #777;
   }
 
+  /* 젤리(Aqua) 느낌의 슬라이더 손잡이 */
   input[type=range].mac-slider::-webkit-slider-thumb {
     -webkit-appearance: none;
-    width: 14px;
-    height: 20px;
-    background: #eee;
-    border: 1px solid #222;
-    box-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+    height: 22px;
+    width: 22px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 30% 30%, #7db9e8, var(--aqua-blue));
+    border: 1px solid #1a4a91;
+    box-shadow: inset 1px 1px 2px rgba(255,255,255,0.6), 1px 2px 4px rgba(0,0,0,0.5);
+    margin-top: -8px; /* 궤도 중앙에 맞추기 */
     cursor: pointer;
   }
 </style>
@@ -173,7 +187,7 @@
 <div class="window">
   <div class="title-bar">
     <div class="close-box"></div>
-    <div class="title-bar-text">쩡난감 v3.1 (Hotfix)</div>
+    <div class="title-bar-text">쩡난감 v3.2 (Design Overhaul)</div>
   </div>
   <div class="menu-bar">
     <span>File</span><span>Edit</span><span>Sound</span><span>Help</span>
@@ -195,7 +209,6 @@
   let globalTimer;
   let seconds = 0;
 
-  // 오디오 엔진을 필요할 때만 깨우기 위해 변수만 선언
   let audioCtx = null;
 
   function initAudioEngine() {
@@ -247,7 +260,7 @@
             decodedAudioBuffer = await audioCtx.decodeAudioData(arrayBuffer);
             
             const channelData = decodedAudioBuffer.getChannelData(0);
-            const threshold = 0.01; // 1%로 대폭 하향 (웬만한 작은 소리도 안 날아감)
+            const threshold = 0.01; 
             let startSample = 0;
             
             for (let j = 0; j < channelData.length; j++) {
@@ -257,7 +270,6 @@
               }
             }
             
-            // 0.05초 여유 줘서 앞글자 씹히는 거 완벽 방지
             const padding = Math.floor(decodedAudioBuffer.sampleRate * 0.05);
             startSample = Math.max(0, startSample - padding);
             
@@ -288,7 +300,7 @@
     };
 
     const handleInteraction = (e) => {
-      initAudioEngine(); // 터치하는 순간 무조건 오디오 락 강제 해제
+      initAudioEngine(); 
 
       if (pad.dataset.state === 'empty') {
         startRecording();
@@ -308,10 +320,9 @@
       }
     };
 
-    // 아이폰 터치 이벤트 최적화
     pad.addEventListener('touchstart', (e) => {
       if (e.target !== pitchSlider) e.preventDefault(); 
-      initAudioEngine(); // 미리 깨우기
+      initAudioEngine(); 
       isLongPress = false;
       if (pad.dataset.state === 'recorded') {
         pressTimer = setTimeout(() => {
@@ -328,7 +339,7 @@
     });
     
     pad.addEventListener('mousedown', (e) => {
-      initAudioEngine(); // PC용 미리 깨우기
+      initAudioEngine(); 
       isLongPress = false;
       if (pad.dataset.state === 'recorded') {
         pressTimer = setTimeout(() => {
